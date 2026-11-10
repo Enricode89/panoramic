@@ -104,8 +104,18 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:gira .8s linear infinite;vertical-align:-3px;margin-right:8px}
 @keyframes gira{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.hv .notif{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;height:auto;padding:12px 14px;border-radius:22px;background:rgba(255,255,255,.96);color:var(--ink);border:1px solid var(--line);box-shadow:0 14px 34px rgba(18,26,33,.18);font:inherit;cursor:pointer;animation:scende .6s cubic-bezier(.2,.9,.3,1.2) both .2s}
+.hv .notif .ni{flex:none;width:40px;height:40px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:19px}
+.hv .notif .nb{display:grid;gap:2px;min-width:0}
+.hv .notif .nh{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}.hv .notif .nh b{letter-spacing:.08em;font-size:11.5px}
+.hv .notif .nt{font-size:15px}.hv .notif .nx{font-size:14px;color:#3B444D;line-height:1.35}
+.hv .notif:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.hv .guest{text-align:center;opacity:.75}.hv .okc{width:52px;height:52px;border-radius:50%;background:var(--green-t);color:var(--green);display:grid;place-items:center;font-size:26px;font-weight:800;margin:4px auto 8px}
+.demobar a{color:inherit;font-weight:800;text-decoration:underline;cursor:pointer;white-space:nowrap}
+@keyframes scende{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.hv .notif{animation:none}}
 </style>
-<div class="demobar"><b>Prova</b> · compila come se fossi l'ospite. Le foto sono facoltative e nessun dato viene inviato.</div>
+<div class="demobar"><b>Prova</b> · compila come se fossi l'ospite: foto facoltative, nessun dato inviato. <a role="button" tabindex="0" onclick="DEMO.esempio()" onkeydown="if(event.key==='Enter')DEMO.esempio()">Vedi subito il lato host →</a></div>
 
 <div class="wrap" id="app"><div class="center">…</div></div>
 
@@ -121,7 +131,7 @@ const DEMO = (() => {
   const P = { ok: true, p: { arrivo: iso(arrivo), partenza: iso(partenza), nomeStruttura: 'Loft Centro Storico', ospite: 'Sophie Martin', ospiti: 2 } };
   const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const dIt = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s || '—'); };
-  let G = [], gruppo = 'singolo', fase = 'verifica';
+  let G = [], gruppo = 'singolo', fase = 'notifica';
   function host() {
     if (!G.length) G = (typeof S !== 'undefined' ? S.ospiti : []).map(o => ({ cognome: (o.cognome || '').toUpperCase(), nome: (o.nome || '').toUpperCase(), sesso: o.sesso === '1' ? 'M' : o.sesso === '2' ? 'F' : '—',
       nascita: o.nascita, luogo: o.comuneTxt || o.statoTxt || '—', citt: o.cittTxt || '—',
@@ -137,7 +147,7 @@ const DEMO = (() => {
       <label for="dn${i}">Nome</label><input id="dn${i}" value="${e(g.nome)}" autocapitalize="characters">
       ${g.doc ? `<label for="dd${i}">Documento</label><input id="dd${i}" value="${e(g.doc)}" autocapitalize="characters">` : ''}</fieldset>`).join('');
     const lead = `<div class="lead"><small>Lato host</small><h1>${fase === 'inviato' ? 'Fatto: schedine inviate.' : 'Ecco cosa ricevi tu.'}</h1>
-      <p>${fase === 'inviato' ? 'In una vera installazione partono ad AlloggiatiWeb e l\'ISTAT si aggiorna da solo.' : 'Ti arriva una notifica sul telefono: apri, controlli i dati e invii alla Questura con un tocco.'}</p></div>`;
+      <p>${fase === 'inviato' ? 'In una vera installazione partono ad AlloggiatiWeb e l\'ISTAT si aggiorna da solo.' : 'Controlli i dati, correggi un errore se serve e invii alla Questura con un tocco.'}</p></div>`;
     let card;
     if (fase === 'inviato') card = `<div class="q"><h2>Ricevuta invio Questura</h2>
       <div class="ok"><span>✓</span><span>Inviate oggi alle ${new Date().toTimeString().slice(0, 5)} · ${G.length} ${G.length === 1 ? 'schedina accettata' : 'schedine accettate'}</span></div>
@@ -154,11 +164,32 @@ const DEMO = (() => {
     $('#app').innerHTML = `<div class="hv">${lead}${card}</div>`;
     scrollTo(0, 0);
   }
+  // come arriva all'host: notifica sul telefono, poi tocco → pagina di verifica
+  function notifica() {
+    const g = G[0] || {}, p = P.p;
+    const ora = new Date().toTimeString().slice(0, 5);
+    $('#app').innerHTML = `<div class="hv">
+      <div class="lead"><small>Lato host</small><h1>Ecco come ti arriva.</h1><p>Appena l'ospite invia, sul tuo telefono compare questa notifica. Toccala.</p></div>
+      <button class="notif" id="notif" onclick="DEMO.apri()" aria-label="Apri la notifica del nuovo check-in">
+        <span class="ni">P</span><span class="nb"><span class="nh"><b>PANORAMIC</b><span>${ora}</span></span>
+        <b class="nt">🛂 Nuovo check-in · ${e(p.nomeStruttura)}</b>
+        <span class="nx">${e(g.cognome)} ${e(g.nome)} · ${G.length} ${G.length === 1 ? 'persona' : 'persone'} · arrivo ${dIt(p.arrivo)}<br>Tocca per verificare dati e foto, poi invia in Questura</span></span></button>
+      <div class="q guest"><div class="okc">✓</div><h2>Grazie!</h2><p class="note" style="margin:0">Questo è quello che vede l'ospite dopo l'invio: ha finito, il resto lo fai tu.</p></div></div>`;
+    scrollTo(0, 0);
+  }
   return {
     fotoFacoltative: true,
     get: async q => q.indexOf('prenotazione') === 0 ? P : q === 'tabelle' ? TAB : { ok: false },
     post: async body => { gruppo = body.gruppo || 'singolo'; await new Promise(r => setTimeout(r, 700)); return { ok: true, id: 'demo' }; },
-    host,
+    host: () => fase === 'notifica' ? notifica() : host(),
+    apri() { fase = 'verifica'; host(); },
+    esempio() {
+      if (typeof S === 'undefined' || !S.tab) return;
+      gruppo = 'famiglia';
+      G = [{ cognome: 'MARTIN', nome: 'SOPHIE', sesso: 'F', nascita: '1990-03-12', luogo: 'FRANCIA', citt: 'FRANCIA', doc: 'PASSAPORTO ORDINARIO 24FR48211' },
+        { cognome: 'MARTIN', nome: 'LUCAS', sesso: 'M', nascita: '2018-07-05', luogo: 'FRANCIA', citt: 'FRANCIA', doc: '' }];
+      fase = 'notifica'; S.done = true; render();
+    },
     correggi() {
       G.forEach((g, i) => { g.cognome = ($('#dc' + i).value || '').toUpperCase(); g.nome = ($('#dn' + i).value || '').toUpperCase(); if ($('#dd' + i)) g.doc = ($('#dd' + i).value || '').toUpperCase(); });
       host();
